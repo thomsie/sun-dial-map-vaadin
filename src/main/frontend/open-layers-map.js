@@ -10,7 +10,8 @@ import Feature from 'ol/Feature.js';
 import Point from 'ol/geom/Point.js';
 import LineString from 'ol/geom/LineString.js';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
-import { Style, Stroke, Circle, Fill } from 'ol/style.js';
+// HIER WURDE 'Icon' IM IMPORT ERGÄNZT:
+import { Style, Stroke, Circle, Fill, Icon } from 'ol/style.js'; 
 import Modify from 'ol/interaction/Modify.js';
 import Overlay from 'ol/Overlay.js';
 import olStyles from 'ol/ol.css?inline';
@@ -26,7 +27,7 @@ class OpenLayersMap extends LitElement {
 
   constructor() {
     super();
-    this.baseStyle = 'streets'; // Standard-Stil
+    this.baseStyle = 'streets';
     this._menuOpen = false;
   }
 
@@ -68,7 +69,7 @@ class OpenLayersMap extends LitElement {
         position: absolute;
         top: 15px;
         right: 15px;
-        z-index: 100;
+        z-index: 1000;
         font-family: system-ui, -apple-system, sans-serif;
       }
       .layer-btn {
@@ -140,6 +141,12 @@ class OpenLayersMap extends LitElement {
     `
   ];
 
+  _handleUiClick(event, action) {
+    event.stopPropagation();
+    event.preventDefault();
+    action();
+  }
+
   _toggleMenu() {
     this._menuOpen = !this._menuOpen;
     this.requestUpdate();
@@ -149,8 +156,8 @@ class OpenLayersMap extends LitElement {
     this.baseStyle = style;
     this._menuOpen = false;
     this._updateBaseLayer();
+    this.requestUpdate();
     
-    // Event an Vaadin feuern, falls das Backend den aktuellen Zustand wissen muss
     this.dispatchEvent(new CustomEvent('base-style-changed', {
       detail: { style: this.baseStyle },
       bubbles: true,
@@ -164,21 +171,21 @@ class OpenLayersMap extends LitElement {
       <div id="tooltip" class="map-tooltip" style="display: none;"></div>
 
       <div class="layer-switcher" @mouseleave=${() => { this._menuOpen = false; this.requestUpdate(); }}>
-        <button class="layer-btn" @click=${this._toggleMenu} title="Kartenstil ändern">
+        <button class="layer-btn" @click=${(e) => this._handleUiClick(e, () => this._toggleMenu())} title="Kartenstil ändern">
           <svg viewBox="0 0 24 24">
             <path d="M12 2L1 7l11 5 11-5-11-5zM2 12l10 5 10-5M2 17l10 5 10-5"/>
           </svg>
         </button>
         <div class="layer-menu ${this._menuOpen ? 'open' : ''}">
-          <div class="layer-option ${this.baseStyle === 'streets' ? 'active' : ''}" @click=${() => this._selectStyle('streets')}>
+          <div class="layer-option ${this.baseStyle === 'streets' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('streets'))}>
             <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-streets.png'), linear-gradient(#e0e0e0, #bdbdbd);"></div>
             <span>Straße</span>
           </div>
-          <div class="layer-option ${this.baseStyle === 'satellite' ? 'active' : ''}" @click=${() => this._selectStyle('satellite')}>
+          <div class="layer-option ${this.baseStyle === 'satellite' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('satellite'))}>
             <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-satellite.png'), linear-gradient(#424242, #212121);"></div>
             <span>Satellit</span>
           </div>
-          <div class="layer-option ${this.baseStyle === 'hybrid' ? 'active' : ''}" @click=${() => this._selectStyle('hybrid')}>
+          <div class="layer-option ${this.baseStyle === 'hybrid' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('hybrid'))}>
             <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-hybrid.png'), linear-gradient(#757575, #424242);"></div>
             <span>Hybrid</span>
           </div>
@@ -378,11 +385,49 @@ class OpenLayersMap extends LitElement {
     const color = feature.get('color') || '#eab308';
     
     if (feature.get('isEndPoint')) {
+      const label = feature.get('description') || '';
+      let iconInnerSvg = '';
+
+      if (label.includes('Sonnenaufgang') || label.includes('Morgendämmerung') || label.includes('Goldene')) {
+        iconInnerSvg = `<path d="M12 2v8"/><path d="m5.22 10.22 1.42 1.42"/><path d="m17.36 11.64 1.42-1.42"/><path d="M22 22H2"/><path d="M16 16a4 4 0 1 0-8 0"/><path d="M12 18H8"/><path d="M16 18h-4"/>`;
+      } else if (label.includes('Sonnenuntergang') || label.includes('Abenddämmerung')) {
+        iconInnerSvg = `<path d="M12 10V2"/><path d="m5.22 10.22 1.42-1.42"/><path d="m17.36 8.8 1.42 1.42"/><path d="M22 22H2"/><path d="M16 16a4 4 0 1 0-8 0"/><path d="M12 18H8"/><path d="M16 18h-4"/>`;
+      } else if (label.includes('Aktuell')) {
+        iconInnerSvg = `<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m16.26 16.26 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>`;
+      } else if (label.includes('Mond')) {
+        iconInnerSvg = `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>`;
+      }
+
+      if (!iconInnerSvg) {
+        return new Style({
+          image: new Circle({
+            radius: 12,
+            fill: new Fill({ color: color }),
+            stroke: new Stroke({ color: '#ffffff', width: 2 })
+          })
+        });
+      }
+
+      const markerSize = 38;
+      const radius = 17; 
+      const center = markerSize / 2;
+
+      const dynamicSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${markerSize}" height="${markerSize}" viewBox="0 0 ${markerSize} ${markerSize}">
+        <circle cx="${center}" cy="${center}" r="${radius}" fill="${color}" stroke="#ffffff" stroke-width="2"/>
+        <g transform="translate(7, 7)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          ${iconInnerSvg}
+        </g>
+      </svg>`;
+
+      const svgUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(dynamicSvg);
+
+      // BEHOBEN: Hier wurde fälschlicherweise 'new ol.style.Icon' aufgerufen.
+      // Nun wird korrekt das oben importierte 'Icon' verwendet.
       return new Style({
-        image: new Circle({
-          radius: 12, 
-          fill: new Fill({ color: color }),
-          stroke: new Stroke({ color: '#ffffff', width: 2 })
+        image: new Icon({
+          src: svgUrl,
+          scale: 1,
+          anchor: [0.5, 0.5]
         })
       });
     }
