@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-Application<sun-dial-map-vaadin>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "org.vaadin.example.Application",
+            "projectName": "sun-dial-map-vaadin",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+/* Layout helpers for SunMapView */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+vaadin-app-layout,
+#outlet {
+    height: 100%;
+}

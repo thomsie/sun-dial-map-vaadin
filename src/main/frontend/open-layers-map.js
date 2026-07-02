@@ -1,0 +1,401 @@
+import { LitElement, html, css, unsafeCSS } from 'lit';
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import VectorLayer from 'ol/layer/Vector.js';
+import OSM from 'ol/source/OSM.js';
+import XYZ from 'ol/source/XYZ.js';
+import VectorSource from 'ol/source/Vector.js';
+import Feature from 'ol/Feature.js';
+import Point from 'ol/geom/Point.js';
+import LineString from 'ol/geom/LineString.js';
+import { fromLonLat, toLonLat } from 'ol/proj.js';
+import { Style, Stroke, Circle, Fill } from 'ol/style.js';
+import Modify from 'ol/interaction/Modify.js';
+import Overlay from 'ol/Overlay.js';
+import olStyles from 'ol/ol.css?inline';
+
+class OpenLayersMap extends LitElement {
+  static properties = {
+    lat: { type: Number },
+    lng: { type: Number },
+    zoom: { type: Number },
+    baseStyle: { type: String },
+    rays: { type: Array },
+  };
+
+  constructor() {
+    super();
+    this.baseStyle = 'streets'; // Standard-Stil
+    this._menuOpen = false;
+  }
+
+  static styles = [
+    unsafeCSS(olStyles),
+    css`
+      :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      .map {
+        width: 100%;
+        height: 100%;
+      }
+      .ol-attribution {
+        bottom: 0.5em !important;
+        right: 0.5em !important;
+        top: auto !important;
+        left: auto !important;
+      }
+      .map-tooltip {
+        background: rgba(30, 41, 59, 0.9);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+      }
+
+      /* Schwebender Google-Maps-Style Layer-Umschalter */
+      .layer-switcher {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 100;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .layer-btn {
+        background: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+      .layer-btn:hover {
+        background: #f4f4f5;
+      }
+      .layer-btn svg {
+        width: 22px;
+        height: 22px;
+        fill: #4b5563;
+      }
+      .layer-menu {
+        position: absolute;
+        top: 48px;
+        right: 0;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        padding: 6px;
+        display: none;
+        gap: 6px;
+      }
+      .layer-menu.open {
+        display: flex;
+      }
+      .layer-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        width: 60px;
+        font-size: 11px;
+        font-weight: 500;
+        color: #374151;
+        transition: background 0.2s;
+      }
+      .layer-option:hover {
+        background: #f4f4f5;
+      }
+      .layer-option.active {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+      .layer-icon-preview {
+        width: 44px;
+        height: 44px;
+        border-radius: 6px;
+        margin-bottom: 4px;
+        border: 2px solid transparent;
+        background-size: cover;
+      }
+      .layer-option.active .layer-icon-preview {
+        border-color: #2563eb;
+      }
+    `
+  ];
+
+  _toggleMenu() {
+    this._menuOpen = !this._menuOpen;
+    this.requestUpdate();
+  }
+
+  _selectStyle(style) {
+    this.baseStyle = style;
+    this._menuOpen = false;
+    this._updateBaseLayer();
+    
+    // Event an Vaadin feuern, falls das Backend den aktuellen Zustand wissen muss
+    this.dispatchEvent(new CustomEvent('base-style-changed', {
+      detail: { style: this.baseStyle },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  render() {
+    return html`
+      <div class="map"></div>
+      <div id="tooltip" class="map-tooltip" style="display: none;"></div>
+
+      <div class="layer-switcher" @mouseleave=${() => { this._menuOpen = false; this.requestUpdate(); }}>
+        <button class="layer-btn" @click=${this._toggleMenu} title="Kartenstil ändern">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L1 7l11 5 11-5-11-5zM2 12l10 5 10-5M2 17l10 5 10-5"/>
+          </svg>
+        </button>
+        <div class="layer-menu ${this._menuOpen ? 'open' : ''}">
+          <div class="layer-option ${this.baseStyle === 'streets' ? 'active' : ''}" @click=${() => this._selectStyle('streets')}>
+            <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-streets.png'), linear-gradient(#e0e0e0, #bdbdbd);"></div>
+            <span>Straße</span>
+          </div>
+          <div class="layer-option ${this.baseStyle === 'satellite' ? 'active' : ''}" @click=${() => this._selectStyle('satellite')}>
+            <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-satellite.png'), linear-gradient(#424242, #212121);"></div>
+            <span>Satellit</span>
+          </div>
+          <div class="layer-option ${this.baseStyle === 'hybrid' ? 'active' : ''}" @click=${() => this._selectStyle('hybrid')}>
+            <div class="layer-icon-preview" style="background-image: url('https://abc-atp.github.io/images/map-hybrid.png'), linear-gradient(#757575, #424242);"></div>
+            <span>Hybrid</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  firstUpdated() {
+    this._container = this.shadowRoot.querySelector('.map');
+    this._tooltipEl = this.shadowRoot.querySelector('#tooltip');
+
+    this._streets = new TileLayer({ 
+      source: new OSM({
+        attributions: 'Data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+      }) 
+    });
+    
+    this._satellite = new TileLayer({
+      source: new XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attributions: 'Tiles © Esri · Data © OpenStreetMap contributors',
+      }),
+    });
+
+    this._hybridOverlay = new TileLayer({
+      source: new XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+        attributions: 'Tiles © Esri',
+      }),
+    });
+
+    this._markerSource = new VectorSource();
+    this._markerFeature = new Feature({
+      geometry: new Point(fromLonLat([this.lng || 13.405, this.lat || 52.52])),
+    });
+    this._markerSource.addFeature(this._markerFeature);
+
+    this._raySource = new VectorSource();
+    this._rayLayer = new VectorLayer({
+      source: this._raySource,
+      style: (feature) => this._rayStyle(feature),
+    });
+
+    this._markerLayer = new VectorLayer({
+      source: this._markerSource,
+      style: new Style({
+        image: new Circle({
+          radius: 8,
+          fill: new Fill({ color: '#2563eb' }),
+          stroke: new Stroke({ color: '#ffffff', width: 2 }),
+        }),
+      }),
+    });
+
+    this._map = new Map({
+      target: this._container,
+      layers: [this._streets, this._rayLayer, this._markerLayer],
+      view: new View({
+        center: fromLonLat([this.lng || 13.405, this.lat || 52.52]),
+        zoom: this.zoom || 10, 
+      }),
+    });
+
+    this._tooltipOverlay = new Overlay({
+      element: this._tooltipEl,
+      offset: [0, -20],
+      positioning: 'bottom-center',
+    });
+    this._map.addOverlay(this._tooltipOverlay);
+
+    this._resizeObserver = new ResizeObserver(() => {
+      if (this._map) this._map.updateSize();
+    });
+    this._resizeObserver.observe(this._container);
+
+    this._modify = new Modify({ source: this._markerSource });
+    this._modify.on('modifyend', () => this._emitPosition());
+    this._map.addInteraction(this._modify);
+
+    this._map.on('singleclick', (event) => {
+      if (event.dragging) return;
+      const [lng, lat] = toLonLat(event.coordinate);
+      this._setMarker(lat, lng, false);
+      this._emitPosition();
+    });
+
+    this._map.on('pointermove', (event) => {
+      if (event.dragging) return;
+      
+      const hit = this._map.forEachFeatureAtPixel(event.pixel, (feature) => {
+        if (feature.get('isEndPoint') && feature.get('description')) {
+          return feature;
+        }
+      }, {
+        layerFilter: (layer) => layer === this._rayLayer
+      });
+
+      if (hit) {
+        this._container.style.cursor = 'pointer';
+        this._tooltipEl.style.display = 'block';
+        this._tooltipEl.textContent = hit.get('description');
+        this._tooltipOverlay.setPosition(hit.getGeometry().getCoordinates());
+      } else {
+        this._container.style.cursor = '';
+        this._tooltipEl.style.display = 'none';
+        this._tooltipOverlay.setPosition(undefined);
+      }
+    });
+
+    this._updateBaseLayer();
+    this._updateRays();
+  }
+
+  disconnectedCallback() {
+    if (this._resizeObserver) this._resizeObserver.disconnect();
+    super.disconnectedCallback();
+  }
+
+  updated(changed) {
+    if (!this._map) return;
+    if (changed.has('lat') || changed.has('lng')) this._setMarker(this.lat, this.lng, false);
+    if (changed.has('zoom') && this.zoom !== undefined) this._map.getView().setZoom(this.zoom);
+    if (changed.has('baseStyle')) this._updateBaseLayer();
+    if (changed.has('rays')) this._updateRays();
+  }
+
+  flyTo(lat, lng, zoom) {
+    if (!this._map) return;
+    this.lat = lat;
+    this.lng = lng;
+    this.zoom = zoom;
+    this._setMarker(lat, lng, true);
+    this._map.getView().animate({ center: fromLonLat([lng, lat]), zoom, duration: 800 });
+  }
+
+  _setMarker(lat, lng, moveView) {
+    if (!this._markerFeature) return;
+    this.lat = lat;
+    this.lng = lng;
+    this._markerFeature.getGeometry().setCoordinates(fromLonLat([lng, lat]));
+    if (moveView) this._map.getView().setCenter(fromLonLat([lng, lat]));
+    this._updateRays();
+  }
+
+  _emitPosition() {
+    const [lng, lat] = toLonLat(this._markerFeature.getGeometry().getCoordinates());
+    this.lat = lat;
+    this.lng = lng;
+    this.dispatchEvent(new CustomEvent('position-changed', { detail: { lat, lng }, bubbles: true, composed: true }));
+  }
+
+  _updateBaseLayer() {
+    if (!this._map) return;
+    
+    this._map.getLayers().remove(this._streets);
+    this._map.getLayers().remove(this._satellite);
+    this._map.getLayers().remove(this._hybridOverlay);
+
+    if (this.baseStyle === 'hybrid') {
+      this._map.getLayers().insertAt(0, this._satellite);
+      this._map.getLayers().insertAt(1, this._hybridOverlay);
+    } else if (this.baseStyle === 'satellite') {
+      this._map.getLayers().insertAt(0, this._satellite);
+    } else {
+      this._map.getLayers().insertAt(0, this._streets);
+    }
+  }
+
+  _updateRays() {
+    if (!this._raySource) return;
+    this._raySource.clear();
+    const rays = this.rays || [];
+    const origin = fromLonLat([this.lng, this.lat]);
+
+    rays.forEach((ray) => {
+      const end = fromLonLat([ray.endLng, ray.endLat]);
+      
+      const line = new Feature({
+        geometry: new LineString([origin, end]),
+        color: ray.color,
+        dashed: ray.dashed,
+      });
+      this._raySource.addFeature(line);
+
+      const endPoint = new Feature({
+        geometry: new Point(end),
+        color: ray.color,
+        description: ray.label,
+        isEndPoint: true
+      });
+      this._raySource.addFeature(endPoint);
+    });
+  }
+
+  _rayStyle(feature) {
+    const color = feature.get('color') || '#eab308';
+    
+    if (feature.get('isEndPoint')) {
+      return new Style({
+        image: new Circle({
+          radius: 12, 
+          fill: new Fill({ color: color }),
+          stroke: new Stroke({ color: '#ffffff', width: 2 })
+        })
+      });
+    }
+
+    const dashed = feature.get('dashed') || false;
+    return new Style({
+      stroke: new Stroke({
+        color,
+        width: 3,
+        lineDash: dashed ? [6, 8] : undefined,
+      })
+    });
+  }
+}
+
+customElements.define('open-layers-map', OpenLayersMap);
