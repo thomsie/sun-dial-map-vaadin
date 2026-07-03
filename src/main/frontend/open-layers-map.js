@@ -151,12 +151,18 @@ class OpenLayersMap extends LitElement {
     this.requestUpdate();
   }
 
+  _closeMenu() {
+    if (!this._menuOpen) return;
+    this._menuOpen = false;
+    this.requestUpdate();
+  }
+
   _selectStyle(style) {
     this.baseStyle = style;
     this._menuOpen = false;
     this._updateBaseLayer();
     this.requestUpdate();
-    
+
     this.dispatchEvent(new CustomEvent('base-style-changed', {
       detail: { style: this.baseStyle },
       bubbles: true,
@@ -169,7 +175,7 @@ class OpenLayersMap extends LitElement {
       <div class="map"></div>
       <div id="tooltip" class="map-tooltip" style="display: none;"></div>
 
-      <div class="layer-switcher" @mouseleave=${() => { this._menuOpen = false; this.requestUpdate(); }}>
+      <div class="layer-switcher">
         <button class="layer-btn" @click=${(e) => this._handleUiClick(e, () => this._toggleMenu())} title="Kartenstil ändern">
           <svg viewBox="0 0 24 24">
             <path d="M12 2L1 7l11 5 11-5-11-5zM2 12l10 5 10-5M2 17l10 5 10-5"/>
@@ -196,6 +202,13 @@ class OpenLayersMap extends LitElement {
   firstUpdated() {
     this._container = this.shadowRoot.querySelector('.map');
     this._tooltipEl = this.shadowRoot.querySelector('#tooltip');
+
+    this._outsideClickListener = (event) => {
+      if (!event.composedPath().includes(this.shadowRoot.querySelector('.layer-switcher'))) {
+        this._closeMenu();
+      }
+    };
+    document.addEventListener('click', this._outsideClickListener);
 
     this._streets = new TileLayer({ 
       source: new OSM({
@@ -311,6 +324,7 @@ class OpenLayersMap extends LitElement {
 
   disconnectedCallback() {
     if (this._resizeObserver) this._resizeObserver.disconnect();
+    if (this._outsideClickListener) document.removeEventListener('click', this._outsideClickListener);
     super.disconnectedCallback();
   }
 
