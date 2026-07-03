@@ -323,18 +323,6 @@ public class SunMapView extends VerticalLayout {
             rays.add(ray(nowPos.getAzimuth(), above ? "#eab308" : "#64748b",
             "☀️ Aktuell test " + formatTime(reference) + " · %.1f°".formatted(nowPos.getAltitude()), !above));
 
-            // SunPosition nowPos = SunPosition.compute().on(reference).at(lat, lng).execute();
-            // boolean above = nowPos.getAltitude() > 0;
-
-            // // Berechne eine dynamische Länge: Je höher die Sonne, desto länger (max 150km),
-            // // oder fix auf z.B. 100km setzen
-            // double lineLengthKm = above ? Math.min(150.0, nowPos.getAltitude() * 3.0) : 50.0;
-
-            // // Übergib die gewünschte Länge an die angepasste ray-Methode
-            // rays.add(rayWithLength(nowPos.getAzimuth(), above ? "#eab308" : "#64748b",
-            //         "☀️ Aktuell test " + formatTime(reference) + " · %.1f°".formatted(nowPos.getAltitude()), !above,
-            //         lineLengthKm));
-
         } else if (mode == DisplayMode.MOON) {
             MoonTimes moonTimes = MoonTimes.compute().on(selectedDate).at(lat, lng).execute();
             if (moonTimes.getRise() != null) {
@@ -590,10 +578,5 @@ public class SunMapView extends VerticalLayout {
                 .set("grid-template-columns", "1fr 1fr")
                 .set("gap", "var(--lumo-space-s)");
         return grid;
-    }
-
-    private MapRay rayWithLength(double azimuthDeg, String color, String label, boolean dashed, double distKm) {
-        double[] end = rayEndpoint(lat, lng, azimuthDeg, distKm); // Nutzt jetzt die variable Distanz
-        return new MapRay(end[0], end[1], color, label, dashed);
     }
 }

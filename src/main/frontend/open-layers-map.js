@@ -10,7 +10,6 @@ import Feature from 'ol/Feature.js';
 import Point from 'ol/geom/Point.js';
 import LineString from 'ol/geom/LineString.js';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
-// HIER WURDE 'Icon' IM IMPORT ERGÄNZT:
 import { Style, Stroke, Circle, Fill, Icon } from 'ol/style.js'; 
 import Modify from 'ol/interaction/Modify.js';
 import Overlay from 'ol/Overlay.js';
@@ -230,13 +229,23 @@ class OpenLayersMap extends LitElement {
       style: (feature) => this._rayStyle(feature),
     });
 
+    // Moderner Positions-Marker im Google-Maps-Stil (Blauer Punkt, weißer Rahmen, Aura-Schatten)
+    const positionMarkerSize = 34;
+    const positionCenter = positionMarkerSize / 2;
+    const positionSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${positionMarkerSize}" height="${positionMarkerSize}" viewBox="0 0 ${positionMarkerSize} ${positionMarkerSize}">
+      <circle cx="${positionCenter}" cy="${positionCenter}" r="12" fill="#2563eb" opacity="0.2"/>
+      <circle cx="${positionCenter}" cy="${positionCenter}" r="9" fill="#ffffff"/>
+      <circle cx="${positionCenter}" cy="${positionCenter}" r="6" fill="#2563eb"/>
+    </svg>`;
+    const positionMarkerUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(positionSvg);
+
     this._markerLayer = new VectorLayer({
       source: this._markerSource,
       style: new Style({
-        image: new Circle({
-          radius: 8,
-          fill: new Fill({ color: '#2563eb' }),
-          stroke: new Stroke({ color: '#ffffff', width: 2 }),
+        image: new Icon({
+          src: positionMarkerUrl,
+          scale: 1,
+          anchor: [0.5, 0.5]
         }),
       }),
     });
@@ -388,6 +397,7 @@ class OpenLayersMap extends LitElement {
       const label = feature.get('description') || '';
       let iconInnerSvg = '';
 
+      // Zuordnung der Lucide-Icons (Pfade) basierend auf dem Ray-Label
       if (label.includes('Sonnenaufgang') || label.includes('Morgendämmerung') || label.includes('Goldene')) {
         iconInnerSvg = `<path d="M12 2v8"/><path d="m5.22 10.22 1.42 1.42"/><path d="m17.36 11.64 1.42-1.42"/><path d="M22 22H2"/><path d="M16 16a4 4 0 1 0-8 0"/><path d="M12 18H8"/><path d="M16 18h-4"/>`;
       } else if (label.includes('Sonnenuntergang') || label.includes('Abenddämmerung')) {
@@ -408,6 +418,7 @@ class OpenLayersMap extends LitElement {
         });
       }
 
+      // Zusammenbau des kreisrunden Badges (Farbiger Kreis + weißer Rand + weißes Lucide-Icon)
       const markerSize = 38;
       const radius = 17; 
       const center = markerSize / 2;
@@ -421,8 +432,6 @@ class OpenLayersMap extends LitElement {
 
       const svgUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(dynamicSvg);
 
-      // BEHOBEN: Hier wurde fälschlicherweise 'new ol.style.Icon' aufgerufen.
-      // Nun wird korrekt das oben importierte 'Icon' verwendet.
       return new Style({
         image: new Icon({
           src: svgUrl,

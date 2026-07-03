@@ -1,6 +1,5 @@
 package org.vaadin.example.sunmap.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
@@ -9,6 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import tools.jackson.databind.JsonNode;;
+
 
 @Service
 public class GeocodingService {

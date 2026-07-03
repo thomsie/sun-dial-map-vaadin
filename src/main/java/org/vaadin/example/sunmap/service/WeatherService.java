@@ -1,8 +1,8 @@
 package org.vaadin.example.sunmap.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.JsonNode;
 
 import java.util.Optional;
 

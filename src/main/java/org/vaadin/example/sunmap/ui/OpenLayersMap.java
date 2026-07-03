@@ -6,15 +6,20 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
-import elemental.json.Json;
-import elemental.json.JsonArray;
-import elemental.json.JsonObject;
+
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.List;
+
 
 @Tag("open-layers-map")
 @JsModule("./open-layers-map.js")
 public class OpenLayersMap extends Div {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public OpenLayersMap() {
         setSizeFull();
@@ -57,16 +62,16 @@ public class OpenLayersMap extends Div {
     }
 
     public void setRays(List<MapRay> rays) {
-        JsonArray array = Json.createArray();
-        for (int i = 0; i < rays.size(); i++) {
-            MapRay ray = rays.get(i);
-            JsonObject obj = Json.createObject();
+        ArrayNode array = mapper.createArrayNode();
+        
+        for (MapRay ray : rays) {
+            ObjectNode obj = mapper.createObjectNode();
             obj.put("endLat", ray.endLat());
             obj.put("endLng", ray.endLng());
             obj.put("color", ray.color());
             obj.put("label", ray.label());
             obj.put("dashed", ray.dashed());
-            array.set(i, obj);
+            array.add(obj);
         }
         getElement().setPropertyJson("rays", array);
     }
@@ -84,7 +89,7 @@ public class OpenLayersMap extends Div {
     public com.vaadin.flow.shared.Registration addBaseStyleChangeListener(
             com.vaadin.flow.component.ComponentEventListener<BaseStyleChangeEvent> listener) {
         return getElement().addEventListener("base-style-changed", e -> {
-            String style = e.getEventData().getString("event.detail.style");
+            String style = e.getEventData().get("event.detail.style").asString("streets");
             listener.onComponentEvent(new BaseStyleChangeEvent(this, style));
         }).addEventData("event.detail.style");
     }
