@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.datepicker.DatePicker.DatePickerI18n;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
@@ -158,8 +159,14 @@ public class SunMapView extends VerticalLayout {
         searchProgress.setWidthFull();
 
         datePicker.setValue(selectedDate);
-        datePicker.setLocale(Locale.GERMANY);
+        datePicker.setLocale(Locale.of("de", "CH"));
         datePicker.setWidthFull();
+
+        DatePickerI18n chI18n = new DatePickerI18n()
+        .setDateFormat("dd.MM.yyyy");
+        
+        datePicker.setI18n(chI18n);
+
 
         mapStyleSelect.setLabel("Kartenstil");
         mapStyleSelect.setItems("Strassen", "Satellit","Hybrid");
