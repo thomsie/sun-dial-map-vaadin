@@ -75,6 +75,8 @@ public class SunMapView extends VerticalLayout {
     private final TextField searchField = new TextField("Ort suchen");
     private final ListBox<PlaceResult> searchResults = new ListBox<>();
     private final ProgressBar searchProgress = new ProgressBar();
+    private long searchRequestId = 0;
+    private boolean applyingSelectedPlace = false;
     private final DatePicker datePicker = new DatePicker("Datum");
     private final Select<String> mapStyleSelect = new Select<>();
     private final RadioButtonGroup<DisplayMode> modeGroup = new RadioButtonGroup<>();
@@ -244,7 +246,9 @@ public class SunMapView extends VerticalLayout {
         lat = place.lat();
         lng = place.lng();
         placeName = place.displayName();
+        applyingSelectedPlace = true;
         searchField.setValue(place.displayName());
+        applyingSelectedPlace = false;
         searchResults.setVisible(false);
         searchResults.clear();
         map.flyTo(lat, lng, 11);
@@ -252,18 +256,25 @@ public class SunMapView extends VerticalLayout {
     }
 
     private void searchPlaces(String query) {
+        if (applyingSelectedPlace) {
+            // the field was just updated to the chosen place, no need to search again
+            return;
+        }
         if (query == null || query.isBlank()) {
             searchResults.setVisible(false);
             searchProgress.setVisible(false);
             return;
         }
+        long requestId = ++searchRequestId;
         getUI().ifPresent(ui -> {
             searchProgress.setVisible(true);
-            searchField.setEnabled(false);
             CompletableFuture
                     .supplyAsync(() -> geocoding.search(query))
                     .thenAccept(results -> ui.access(() -> {
-                        searchField.setEnabled(true);
+                        if (requestId != searchRequestId) {
+                            // a newer search was started in the meantime, ignore this stale result
+                            return;
+                        }
                         searchProgress.setVisible(false);
                         searchResults.setItems(results);
                         searchResults.setVisible(!results.isEmpty());
@@ -321,7 +332,7 @@ public class SunMapView extends VerticalLayout {
             SunPosition nowPos = SunPosition.compute().on(reference).at(lat, lng).execute();
             boolean above = nowPos.getAltitude() > 0;
             rays.add(ray(nowPos.getAzimuth(), above ? "#eab308" : "#64748b",
-            "☀️ Aktuell test " + formatTime(reference) + " · %.1f°".formatted(nowPos.getAltitude()), !above));
+            "☀️ Aktuell" + formatTime(reference) + " · %.1f°".formatted(nowPos.getAltitude()), !above));
 
         } else if (mode == DisplayMode.MOON) {
             MoonTimes moonTimes = MoonTimes.compute().on(selectedDate).at(lat, lng).execute();

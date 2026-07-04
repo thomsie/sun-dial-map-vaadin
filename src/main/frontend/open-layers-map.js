@@ -138,13 +138,14 @@ class OpenLayersMap extends LitElement {
         justify-content: center;
       }
       .layer-icon-preview svg {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         fill: none;
         stroke: currentColor;
-        stroke-width: 2;
+        stroke-width: 2.25;
         stroke-linecap: round;
         stroke-linejoin: round;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
       }
       .layer-option.active .layer-icon-preview {
         border-color: #2563eb;
@@ -195,7 +196,7 @@ class OpenLayersMap extends LitElement {
         </button>
         <div class="layer-menu ${this._menuOpen ? 'open' : ''}">
           <div class="layer-option ${this.baseStyle === 'streets' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('streets'))}>
-            <div class="layer-icon-preview" style="background: linear-gradient(#e0e0e0, #bdbdbd); color: #374151;">
+            <div class="layer-icon-preview" style="background: linear-gradient(135deg, #cfe8fb, #fef3c7); color: #1e3a5f;">
               <svg viewBox="0 0 24 24">
                 <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/>
                 <path d="M15 5.764v15.236"/>
@@ -205,7 +206,7 @@ class OpenLayersMap extends LitElement {
             <span>Straße</span>
           </div>
           <div class="layer-option ${this.baseStyle === 'satellite' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('satellite'))}>
-            <div class="layer-icon-preview" style="background: linear-gradient(#424242, #212121); color: #f4f4f5;">
+            <div class="layer-icon-preview" style="background: linear-gradient(135deg, #2e7d32, #1b3a1e); color: #f4f4f5;">
               <svg viewBox="0 0 24 24">
                 <path d="M13 7 9 3 4 8l4 4"/>
                 <path d="m17 11 4 4-5 5-4-4"/>
@@ -217,7 +218,7 @@ class OpenLayersMap extends LitElement {
             <span>Satellit</span>
           </div>
           <div class="layer-option ${this.baseStyle === 'hybrid' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('hybrid'))}>
-            <div class="layer-icon-preview" style="background: linear-gradient(#757575, #424242); color: #f4f4f5;">
+            <div class="layer-icon-preview" style="background: linear-gradient(135deg, #1b5e20, #0d3b66); color: #f4f4f5;">
               <svg viewBox="0 0 24 24">
                 <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
                 <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
