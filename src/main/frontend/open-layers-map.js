@@ -275,13 +275,16 @@ class OpenLayersMap extends LitElement {
       style: (feature) => this._rayStyle(feature),
     });
 
-    // Moderner Positions-Marker im Google-Maps-Stil (Blauer Punkt, weißer Rahmen, Aura-Schatten)
-    const positionMarkerSize = 34;
-    const positionCenter = positionMarkerSize / 2;
-    const positionSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${positionMarkerSize}" height="${positionMarkerSize}" viewBox="0 0 ${positionMarkerSize} ${positionMarkerSize}">
-      <circle cx="${positionCenter}" cy="${positionCenter}" r="12" fill="#2563eb" opacity="0.2"/>
-      <circle cx="${positionCenter}" cy="${positionCenter}" r="9" fill="#ffffff"/>
-      <circle cx="${positionCenter}" cy="${positionCenter}" r="6" fill="#2563eb"/>
+    // Positions-Marker als orangener Tropfen-Pin (LocationScout-Stil) mit Kamera-Icon
+    const pinWidth = 32;
+    const pinHeight = 40;
+    const positionSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pinWidth}" height="${pinHeight}" viewBox="0 0 ${pinWidth} ${pinHeight}">
+      <path d="M16 2C9.373 2 4 7.373 4 14c0 9.5 12 24 12 24s12-14.5 12-24c0-6.627-5.373-12-12-12z" fill="#f97316" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="16" cy="14" r="9" fill="#ffffff"/>
+      <g transform="translate(8.5, 6.5) scale(0.7)" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <circle cx="12" cy="13" r="3"/>
+      </g>
     </svg>`;
     const positionMarkerUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(positionSvg);
 
@@ -291,7 +294,7 @@ class OpenLayersMap extends LitElement {
         image: new Icon({
           src: positionMarkerUrl,
           scale: 1,
-          anchor: [0.5, 0.5]
+          anchor: [0.5, 0.95]
         }),
       }),
     });
