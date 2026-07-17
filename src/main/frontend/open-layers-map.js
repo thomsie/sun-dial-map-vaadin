@@ -227,6 +227,14 @@ class OpenLayersMap extends LitElement {
             </div>
             <span>Hybrid</span>
           </div>
+          <div class="layer-option ${this.baseStyle === 'terrain' ? 'active' : ''}" @click=${(e) => this._handleUiClick(e, () => this._selectStyle('terrain'))}>
+            <div class="layer-icon-preview" style="background: linear-gradient(135deg, #d6c9a8, #7a6a4f); color: #3f3524;">
+              <svg viewBox="0 0 24 24">
+                <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+              </svg>
+            </div>
+            <span>Gelände</span>
+          </div>
         </div>
       </div>
     `;
@@ -260,6 +268,13 @@ class OpenLayersMap extends LitElement {
       source: new XYZ({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
         attributions: 'Tiles © Esri',
+      }),
+    });
+
+    this._terrain = new TileLayer({
+      source: new XYZ({
+        url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        attributions: 'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)',
       }),
     });
 
@@ -403,12 +418,15 @@ class OpenLayersMap extends LitElement {
     this._map.getLayers().remove(this._streets);
     this._map.getLayers().remove(this._satellite);
     this._map.getLayers().remove(this._hybridOverlay);
+    this._map.getLayers().remove(this._terrain);
 
     if (this.baseStyle === 'hybrid') {
       this._map.getLayers().insertAt(0, this._satellite);
       this._map.getLayers().insertAt(1, this._hybridOverlay);
     } else if (this.baseStyle === 'satellite') {
       this._map.getLayers().insertAt(0, this._satellite);
+    } else if (this.baseStyle === 'terrain') {
+      this._map.getLayers().insertAt(0, this._terrain);
     } else {
       this._map.getLayers().insertAt(0, this._streets);
     }

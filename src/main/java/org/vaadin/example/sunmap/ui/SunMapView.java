@@ -169,7 +169,7 @@ public class SunMapView extends VerticalLayout {
 
 
         mapStyleSelect.setLabel("Kartenstil");
-        mapStyleSelect.setItems("Strassen", "Satellit","Hybrid");
+        mapStyleSelect.setItems("Strassen", "Satellit", "Hybrid", "Gelände");
         mapStyleSelect.setValue("Strassen");
         mapStyleSelect.setWidthFull();
 
@@ -228,12 +228,12 @@ public class SunMapView extends VerticalLayout {
         });
 
         mapStyleSelect.addValueChangeListener(e -> {
-            if ("Hybrid".equals(e.getValue())) { 
-                map.setBaseStyle("hybrid");
-            }
-            else {
-            map.setBaseStyle("Satellit".equals(e.getValue()) ? "satellite" : "streets");
-            }
+            map.setBaseStyle(switch (e.getValue()) {
+                case "Hybrid" -> "hybrid";
+                case "Satellit" -> "satellite";
+                case "Gelände" -> "terrain";
+                default -> "streets";
+            });
         });
 
         modeGroup.addValueChangeListener(e -> {
@@ -361,8 +361,9 @@ public class SunMapView extends VerticalLayout {
         map.setRays(rays);
     }
 
+    // lange der strahlen
     private MapRay ray(double azimuthDeg, String color, String label, boolean dashed) {
-        double[] end = rayEndpoint(lat, lng, azimuthDeg, 10);
+        double[] end = rayEndpoint(lat, lng, azimuthDeg, 5);
         return new MapRay(end[0], end[1], color, label, dashed);
     }
 
