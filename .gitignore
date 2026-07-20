@@ -27,3 +27,8 @@ target/
 **/target/
 
 /src/main/frontend/generated
+package-lock.json
+package-lock.json
+package.json
+package.json
+package-lock.json

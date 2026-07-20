@@ -3,7 +3,6 @@ import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import TileLayer from 'ol/layer/Tile.js';
 import VectorLayer from 'ol/layer/Vector.js';
-import OSM from 'ol/source/OSM.js';
 import XYZ from 'ol/source/XYZ.js';
 import VectorSource from 'ol/source/Vector.js';
 import Feature from 'ol/Feature.js';
@@ -22,6 +21,7 @@ class OpenLayersMap extends LitElement {
     zoom: { type: Number },
     baseStyle: { type: String },
     rays: { type: Array },
+    mapTilerKey: { type: String },
   };
 
   constructor() {
@@ -251,30 +251,34 @@ class OpenLayersMap extends LitElement {
     };
     document.addEventListener('click', this._outsideClickListener);
 
-    this._streets = new TileLayer({ 
-      source: new OSM({
-        attributions: 'Data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
-      }) 
-    });
-    
-    this._satellite = new TileLayer({
+    const maptilerAttributions = '<a href="https://www.maptiler.com/copyright/" target="_blank">© MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
+    const key = this.mapTilerKey || '';
+
+    this._streets = new TileLayer({
       source: new XYZ({
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attributions: 'Tiles © Esri · Data © OpenStreetMap contributors',
+        url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${key}`,
+        attributions: maptilerAttributions,
       }),
     });
 
-    this._hybridOverlay = new TileLayer({
+    this._satellite = new TileLayer({
       source: new XYZ({
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-        attributions: 'Tiles © Esri',
+        url: `https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=${key}`,
+        attributions: maptilerAttributions,
+      }),
+    });
+
+    this._hybrid = new TileLayer({
+      source: new XYZ({
+        url: `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${key}`,
+        attributions: maptilerAttributions,
       }),
     });
 
     this._terrain = new TileLayer({
       source: new XYZ({
-        url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
-        attributions: 'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)',
+        url: `https://api.maptiler.com/maps/topo-v2/{z}/{x}/{y}.png?key=${key}`,
+        attributions: maptilerAttributions,
       }),
     });
 
@@ -414,15 +418,14 @@ class OpenLayersMap extends LitElement {
 
   _updateBaseLayer() {
     if (!this._map) return;
-    
+
     this._map.getLayers().remove(this._streets);
     this._map.getLayers().remove(this._satellite);
-    this._map.getLayers().remove(this._hybridOverlay);
+    this._map.getLayers().remove(this._hybrid);
     this._map.getLayers().remove(this._terrain);
 
     if (this.baseStyle === 'hybrid') {
-      this._map.getLayers().insertAt(0, this._satellite);
-      this._map.getLayers().insertAt(1, this._hybridOverlay);
+      this._map.getLayers().insertAt(0, this._hybrid);
     } else if (this.baseStyle === 'satellite') {
       this._map.getLayers().insertAt(0, this._satellite);
     } else if (this.baseStyle === 'terrain') {

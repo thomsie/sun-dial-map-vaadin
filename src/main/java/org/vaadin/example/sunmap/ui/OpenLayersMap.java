@@ -21,14 +21,15 @@ public class OpenLayersMap extends Div {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public OpenLayersMap() {
+    public OpenLayersMap(String mapTilerApiKey, double lat, double lng, int zoom) {
         setSizeFull();
         getStyle().set("display", "block");
 
-        getElement().setProperty("lat", 52.52);
-        getElement().setProperty("lng", 13.405);
-        getElement().setProperty("zoom", 11);
+        getElement().setProperty("lat", lat);
+        getElement().setProperty("lng", lng);
+        getElement().setProperty("zoom", zoom);
         getElement().setProperty("baseStyle", "streets");
+        getElement().setProperty("mapTilerKey", mapTilerApiKey == null ? "" : mapTilerApiKey);
     }
 
     @Synchronize(property = "lat", value = "position-changed")

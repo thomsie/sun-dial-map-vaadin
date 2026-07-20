@@ -32,6 +32,7 @@ import org.vaadin.example.sunmap.service.GeocodingService;
 import org.vaadin.example.sunmap.service.GeocodingService.PlaceResult;
 import org.vaadin.example.sunmap.service.WeatherService;
 import org.vaadin.example.sunmap.service.WeatherService.CloudData;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -61,15 +62,17 @@ public class SunMapView extends VerticalLayout {
     private final GeocodingService geocoding;
     private final WeatherService weather;
 
-    private double lat = 52.52;
-    private double lng = 13.405;
+    private static final int DEFAULT_ZOOM = 13;
+
+    private double lat = 46.8605;
+    private double lng = 8.2245;
     private LocalDate selectedDate = LocalDate.now();
-    private String placeName = "Berlin, Deutschland";
+    private String placeName = "Sachseln, Schweiz";
     private ZonedDateTime now = ZonedDateTime.now();
     private DisplayMode mode = DisplayMode.SUN;
     private CloudData cloudData;
 
-    private final OpenLayersMap map = new OpenLayersMap();
+    private final OpenLayersMap map;
 
     private final H2 placeTitle = new H2();
     private final Span coordsLabel = new Span();
@@ -91,9 +94,11 @@ public class SunMapView extends VerticalLayout {
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> reverseGeocodeTask;
 
-    public SunMapView(GeocodingService geocoding, WeatherService weather) {
+    public SunMapView(GeocodingService geocoding, WeatherService weather,
+            @Value("${maptiler.api-key:}") String mapTilerApiKey) {
         this.geocoding = geocoding;
         this.weather = weather;
+        this.map = new OpenLayersMap(mapTilerApiKey, lat, lng, DEFAULT_ZOOM);
 
         setSizeFull();
         setPadding(false);
@@ -127,14 +132,14 @@ public class SunMapView extends VerticalLayout {
         SplitLayout split = new SplitLayout();
         split.setSizeFull();
         split.setOrientation(SplitLayout.Orientation.HORIZONTAL);
-        split.setSplitterPosition(70);
+        split.setSplitterPosition(82);
 
         map.setSizeFull();
         map.setHeight("100%");
         split.addToPrimary(map);
 
         VerticalLayout sidebar = new VerticalLayout();
-        sidebar.setWidth("320px");
+        sidebar.setWidth("280px");
         sidebar.setPadding(true);
         sidebar.setSpacing(true);
         sidebar.getStyle().set("overflow", "auto");
