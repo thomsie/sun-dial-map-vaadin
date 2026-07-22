@@ -1,3 +1,4 @@
 {
 "isGitignoreExtActive": true,
+"java.compile.nullAnalysis.mode": "disabled",
 }
