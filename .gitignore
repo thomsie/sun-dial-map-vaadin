@@ -35,3 +35,7 @@ package-lock.json
 package-lock.json
 package.json
 .DS_Store
+tsconfig.json
+types.d.ts
+src/main/bundles/dev.bundle
+vite.config.ts
