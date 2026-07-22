@@ -4,6 +4,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Synchronize;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
 
@@ -15,13 +16,14 @@ import tools.jackson.databind.node.ObjectNode;
 import java.util.List;
 
 
-@Tag("open-layers-map")
-@JsModule("./open-layers-map.js")
-public class OpenLayersMap extends Div {
+@Tag("maptiler-map")
+@JsModule("./maptiler-map.js")
+@NpmPackage(value = "@maptiler/sdk", version = "4.0.2")
+public class MapTilerMap extends Div {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public OpenLayersMap(String mapTilerApiKey, double lat, double lng, int zoom) {
+    public MapTilerMap(String mapTilerApiKey, double lat, double lng, int zoom) {
         setSizeFull();
         getStyle().set("display", "block");
 
@@ -80,7 +82,6 @@ public class OpenLayersMap extends Div {
     public Registration addPositionChangeListener(ComponentEventListener<PositionChangedEvent> listener) {
         return addListener(PositionChangedEvent.class, listener);
     }
-    // In OpenLayersMap.java hinzufügen:
 
     public String getBaseStyle() {
         return getElement().getProperty("baseStyle", "streets");
@@ -95,10 +96,10 @@ public class OpenLayersMap extends Div {
         }).addEventData("event.detail.style");
     }
 
-    public static class BaseStyleChangeEvent extends com.vaadin.flow.component.ComponentEvent<OpenLayersMap> {
+    public static class BaseStyleChangeEvent extends com.vaadin.flow.component.ComponentEvent<MapTilerMap> {
         private final String style;
 
-        public BaseStyleChangeEvent(OpenLayersMap source, String style) {
+        public BaseStyleChangeEvent(MapTilerMap source, String style) {
             super(source, false);
             this.style = style;
         }

@@ -6,7 +6,7 @@ import com.vaadin.flow.component.EventData;
 
 
 @DomEvent("position-changed")
-public class PositionChangedEvent extends ComponentEvent<OpenLayersMap> {
+public class PositionChangedEvent extends ComponentEvent<MapTilerMap> {
 
     private final double lat;
     private final double lng;
@@ -14,7 +14,7 @@ public class PositionChangedEvent extends ComponentEvent<OpenLayersMap> {
 
 
     public PositionChangedEvent(
-            OpenLayersMap source,
+            MapTilerMap source,
             boolean fromClient,
             @EventData("event.detail.lat") double lat,
             @EventData("event.detail.lng") double lng) {

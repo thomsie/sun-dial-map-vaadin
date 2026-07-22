@@ -72,7 +72,7 @@ public class SunMapView extends VerticalLayout {
     private DisplayMode mode = DisplayMode.SUN;
     private CloudData cloudData;
 
-    private final OpenLayersMap map;
+    private final MapTilerMap map;
 
     private final H2 placeTitle = new H2();
     private final Span coordsLabel = new Span();
@@ -98,7 +98,7 @@ public class SunMapView extends VerticalLayout {
             @Value("${maptiler.api-key:}") String mapTilerApiKey) {
         this.geocoding = geocoding;
         this.weather = weather;
-        this.map = new OpenLayersMap(mapTilerApiKey, lat, lng, DEFAULT_ZOOM);
+        this.map = new MapTilerMap(mapTilerApiKey, lat, lng, DEFAULT_ZOOM);
 
         setSizeFull();
         setPadding(false);
@@ -174,7 +174,7 @@ public class SunMapView extends VerticalLayout {
 
 
         mapStyleSelect.setLabel("Kartenstil");
-        mapStyleSelect.setItems("Strassen", "Satellit", "Hybrid", "Gelände");
+        mapStyleSelect.setItems("Strassen", "Satellit", "Hybrid", "Gelände", "Outdoor");
         mapStyleSelect.setValue("Strassen");
         mapStyleSelect.setWidthFull();
 
@@ -237,6 +237,7 @@ public class SunMapView extends VerticalLayout {
                 case "Hybrid" -> "hybrid";
                 case "Satellit" -> "satellite";
                 case "Gelände" -> "terrain";
+                case "Outdoor" -> "outdoor";
                 default -> "streets";
             });
         });
