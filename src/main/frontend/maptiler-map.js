@@ -26,6 +26,7 @@ class MapTilerMap extends LitElement {
     this._menuOpen = false;
     this._rayMarkers = [];
     this._styleReady = false;
+    this._terrainEnabled = false;
   }
 
   static styles = [
@@ -152,6 +153,46 @@ class MapTilerMap extends LitElement {
       .layer-option.active .layer-icon-preview {
         border-color: #2563eb;
       }
+
+      /* 3D-Gelände-Umschalter */
+      .terrain-switcher {
+        position: absolute;
+        top: 63px;
+        right: 15px;
+        z-index: 1000;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .terrain-btn {
+        background: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+      .terrain-btn:hover {
+        background: #f4f4f5;
+      }
+      .terrain-btn svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: #4b5563;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .terrain-btn.active {
+        background: #2563eb;
+      }
+      .terrain-btn.active svg {
+        stroke: white;
+      }
     `
   ];
 
@@ -183,6 +224,20 @@ class MapTilerMap extends LitElement {
       bubbles: true,
       composed: true
     }));
+  }
+
+  _toggleTerrain() {
+    if (!this._map) return;
+    this._terrainEnabled = !this._terrainEnabled;
+    this.requestUpdate();
+
+    if (this._terrainEnabled) {
+      this._map.enableTerrain(1.5);
+      this._map.easeTo({ pitch: 60, duration: 800 });
+    } else {
+      this._map.disableTerrain();
+      this._map.easeTo({ pitch: 0, duration: 800 });
+    }
   }
 
   render() {
@@ -248,6 +303,18 @@ class MapTilerMap extends LitElement {
             <span>Outdoor</span>
           </div>
         </div>
+      </div>
+
+      <div class="terrain-switcher">
+        <button
+          class="terrain-btn ${this._terrainEnabled ? 'active' : ''}"
+          @click=${(e) => this._handleUiClick(e, () => this._toggleTerrain())}
+          title="3D-Gelände umschalten"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+          </svg>
+        </button>
       </div>
     `;
   }
